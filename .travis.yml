@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t rubhern/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true rubhern/react-test npm test
+
+after_success:
+  - docker build -t rubhern/multi-client ./client
+  - docker build -t rubhern/multi-nginx ./nginx
+  - docker build -t rubhern/multi-server ./server
+  - docker build -t rubhern/multi-worker ./worker
+  # Log in docker hub
+  - echo "$DOCKERPASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push rubhern/multi-client
+  - docker push rubhern/multi-nginx
+  - docker push rubhern/multi-server
+  - docker push rubhern/multi-worker
